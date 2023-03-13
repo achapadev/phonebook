@@ -29,7 +29,7 @@ const App = () => {
   };
 
   const filteredPersons = persons.filter((person) =>
-    person.name.includes(filterName)
+    person.name.toLowerCase().includes(filterName.toLowerCase())
   );
 
   return (
