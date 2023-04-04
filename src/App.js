@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
+import "./index.css"
+import Notification from "./components/Notification"
+import Error from "./components/Error"
 import personService from "./services/Persons"
 
 const App = () => {
@@ -7,6 +10,8 @@ const App = () => {
 	const [newName, setNewName] = useState("")
 	const [newNumber, setNewNumber] = useState("")
 	const [filterName, setFilterName] = useState("")
+	const [message, setMessage] = useState(null)
+	const [errorMessage, setErrorMessage] = useState(null)
 
 	//  fetch initial state from server for persons
 	useEffect(() => {
@@ -35,6 +40,11 @@ const App = () => {
 							)
 						)
 					)
+
+				setMessage(`Successfully updated the number for ${selectedPerson.name}`)
+				setTimeout(() => {
+					setMessage(null)
+				}, 5000)
 			}
 		} else {
 			const newPerson = {
@@ -43,6 +53,10 @@ const App = () => {
 			}
 			personService.create(newPerson).then((returnedPerson) => {
 				setPersons(persons.concat(returnedPerson))
+				setMessage(`Added ${returnedPerson.name}`)
+				setTimeout(() => {
+					setMessage(null)
+				}, 5000)
 			})
 			// setPersons((prevState) => [
 			// 	...prevState,
@@ -63,15 +77,38 @@ const App = () => {
 				`Delete ${persons.find((person) => person.id === id).name} ?`
 			)
 		) {
-			personService.deletePerson(id).then((returnedPerson) => {
-				personService.getAll().then((allPersons) => setPersons(allPersons))
-			})
+			personService
+				.deletePerson(id)
+				.then((returnedPerson) => {
+					personService.getAll().then((allPersons) => setPersons(allPersons))
+					setMessage(
+						`Successfully deleted ${
+							persons.find((p) => p.id === id).name
+						} from Phonebook`
+					)
+					setTimeout(() => {
+						setMessage(null)
+					}, 5000)
+				})
+				.catch((error) => {
+					setErrorMessage(
+						`${
+							persons.find((p) => p.id === id).name
+						} was already removed from server`
+					)
+					setTimeout(() => {
+						setErrorMessage(null)
+					}, 5000)
+					setPersons(persons.filter((p) => p.id !== id))
+				})
 		}
 	}
 
 	return (
 		<div>
 			<h2>Phonebook</h2>
+			<Notification message={message} />
+			<Error errorMessage={errorMessage} />
 			<div>
 				filter shown with:{" "}
 				<input
