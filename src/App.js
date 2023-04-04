@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
+import personService from "./services/Persons"
 
 const App = () => {
 	const [persons, setPersons] = useState([])
@@ -9,11 +10,9 @@ const App = () => {
 
 	//  fetch initial state from server for persons
 	useEffect(() => {
-		const fetchData = async () => {
-			const response = await axios.get("http://localhost:3001/persons")
-			setPersons(response.data)
-		}
-		fetchData()
+		personService.getAll().then((returnedPersons) => {
+			setPersons(returnedPersons)
+		})
 	}, [])
 
 	const handleSubmit = (e) => {
@@ -22,10 +21,17 @@ const App = () => {
 		if (persons.map((person) => person.name).includes(newName)) {
 			alert(`${newName} is already added to phonebook`)
 		} else {
-			setPersons((prevState) => [
-				...prevState,
-				{ name: newName, number: newNumber },
-			])
+			const newPerson = {
+				name: newName,
+				number: newNumber,
+			}
+			personService.create(newPerson).then((returnedPerson) => {
+				setPersons(persons.concat(returnedPerson))
+			})
+			// setPersons((prevState) => [
+			// 	...prevState,
+			// 	{ name: newName, number: newNumber },
+			// ])
 		}
 		setNewName("")
 		setNewNumber("")
@@ -34,6 +40,12 @@ const App = () => {
 	const filteredPersons = persons.filter((person) =>
 		person.name.toLowerCase().includes(filterName.toLowerCase())
 	)
+
+	const handleDelete = (id) => {
+		personService.deletePerson(id).then((returnedPerson) => {
+			personService.getAll().then((allPersons) => setPersons(allPersons))
+		})
+	}
 
 	return (
 		<div>
@@ -66,12 +78,14 @@ const App = () => {
 			{filterName
 				? filteredPersons.map((person) => (
 						<li key={person.name}>
-							{person.name} {person.number}
+							{person.name} {person.number}{" "}
+							<button onClick={() => handleDelete(person.id)}>delete</button>
 						</li>
 				  ))
 				: persons.map((person) => (
 						<li key={person.name}>
-							{person.name} {person.number}
+							{person.name} {person.number}{" "}
+							<button onClick={() => handleDelete(person.id)}>delete</button>
 						</li>
 				  ))}
 		</div>
